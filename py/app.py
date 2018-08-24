@@ -7,6 +7,7 @@ import shutil
 import pickle
 import logging
 import logging.config
+import imghdr
 
 from random import randrange
 from getpass import getpass
@@ -144,6 +145,34 @@ class Client:
         self.info("Navigating to login page.")
         self.br.find_element_by_id("login-button").click()
         self.br.find_element_by_class_name("tp-block-half").click()
+        self.br.find_element_by_class_name("other-login-button").click()
+
+        self.info(self.br.current_url)
+
+        # Enter email.
+        self.info("  Sending username.")
+        email = self.br.find_element_by_css_selector(".controls input[type='text']")
+        email.send_keys(input("Enter email: "))
+
+        # Enter password.
+        self.info("  Sending password.")
+        passwd = self.br.find_element_by_css_selector(".controls input[type='password']")
+        passwd.send_keys(input("Enter password: "))
+
+        # Click "submit".
+        self.info("Sleeping 2 seconds.")
+        self.sleep(minsleep=2)
+        self.info("Clicking 'sumbit' button.")
+        self.br.find_element_by_css_selector(".tp-left-contents .btn-primary").click()
+        self.sleep(minsleep=2)
+        self.info("New url")
+        self.info(self.br.current_url)
+
+    def do_google_login(self):
+        # Navigate to login page.
+        self.info("Navigating to login page.")
+        self.br.find_element_by_id("login-button").click()
+        self.br.find_element_by_class_name("tp-block-half").click()
 
         for element in self.br.find_elements_by_tag_name("img"):
             if "btn-google.png" in element.get_attribute("src"):
@@ -237,9 +266,9 @@ class Client:
             # Navigate to the next month.
             month.click()
             self.warning("Getting urls for month: %r" % month.text)
-            self.sleep(minsleep=5)
+            self.sleep(minsleep=2)
             re_url = re.compile('\("([^"]+)')
-            for div in self.br.find_elements_by_xpath("//li/div"):
+            for div in self.br.find_elements_by_xpath("//div[@class='well left-panel pull-left']/ul/li/div"):
                 url = re_url.search(div.get_attribute("style"))
                 if not url:
                     continue
@@ -247,20 +276,27 @@ class Client:
                 url = url.replace('thumbnail=true', '')
                 url = url.replace('&thumbnail=true', '')
                 url = 'https://www.tadpoles.com' + url
-                yield url
+                daymonth = div.find_element_by_xpath("./div/div[@class='header note mask']/span[@class='name']/span").text
+                dayarray = daymonth.split('/')
+                day = format(int(dayarray[1]), '02d')
+                yield url, day
 
-    def save_image(self, url):
+    def save_image(self, url, day):
         '''Save an image locally using requests.
         '''
 
         # Make the local filename.
         _, key = url.split("key=")
-        filename_parts = ['img', self.year.text, self.month.text, '%s.jpg']
-        filename = abspath(join(*filename_parts) % key)
+        filename_parts = ['img', self.year.text, self.month.text, '%s']
+        filename_base = abspath(join(*filename_parts) % key)
+        filename = filename_base + '.jpg'
 
         # Only download if the file doesn't already exist.
         if isfile(filename):
             self.debug("Already downloaded: %s" % filename)
+            return
+        elif isfile(filename_base + '.png'):
+            self.debug("Already downloaded: %s.png" % filename_base)
             return
         else:
             self.info("Saving: %s" % filename)
@@ -272,6 +308,7 @@ class Client:
             os.makedirs(dr)
 
         # Download it with requests.
+
         resp = requests.get(url, cookies=self.req_cookies, stream=True)
         if resp.status_code == 200:
             with open(filename, 'wb') as f:
@@ -281,6 +318,23 @@ class Client:
             msg = 'Error (%r) downloading %r'
             raise DownloadError(msg % (resp.status_code, url))
 
+        ## set date for exif
+        months = dict(jan="01", feb="02", mar="03", apr="04", may="05", jun="06", jul="07", aug="08", sep="09", oct="10", nov="11", dec="12")
+        yearmonth = self.year.text + ':' + months[self.month.text] + ':' + day + ' 12:00:00'
+        ## check if the file is actually a png
+        imgtype = imghdr.what(filename)
+        if imghdr.what(filename) == 'png':
+            self.info("  File is a png - renaming")
+            os.rename(filename, filename_base + '.png')
+            filename = filename_base + '.png'
+            command = 'exiftool -overwrite_original "-PNG:CreationTime=' + yearmonth + '" "' + filename + '"'
+            self.info("  Adding png exif: %s" % command)
+            os.system(command)
+
+        command = 'exiftool -overwrite_original "-AllDates=' + yearmonth + '" "' + filename + '"'
+        self.info("  Adding exif: %s" % command)
+        os.system(command)
+
     def download_images(self):
         '''Login to tadpoles.com and download all user's images.
         '''
@@ -289,7 +343,21 @@ class Client:
         try:
             self.load_cookies()
         except FileNotFoundError:
-            self.do_login()
+
+            login_type = None
+            while login_type is None:
+                input_value = input("Login Type - [G]oogle or [E]mail/password: ")
+                if input_value == 'G' or input_value == 'g':
+                    login_type = 'google'
+                    self.info("Doing Google login...")
+                    self.do_google_login()
+                elif input_value == "E" or input_value == "e":
+                    login_type = 'email'
+                    self.info("Doing Email login...")
+                    self.do_login()
+                else:
+                    self.info("-- Invalid choice entered - please choose 'G' or 'E'")
+
             self.dump_cookies()
             self.load_cookies()
             self.add_cookies_to_browser()
@@ -303,7 +371,7 @@ class Client:
 
         for url in self.iter_urls():
             try:
-                self.save_image(url)
+                self.save_image(url[0], url[1])
             except DownloadError as exc:
                 self.exception(exc)
 

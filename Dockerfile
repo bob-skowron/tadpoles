@@ -8,10 +8,14 @@ RUN apt-get install -qyy \
     python-virtualenv python3.4-dev python3-setuptools \
     python3-pip xvfb firefox python3-lxml curl
 
+RUN apt-get install -qyy \
+    -o APT::Install-Recommends=true -o APT::Install-Suggests=true \
+    exiftool
+
 RUN pip3 install selenium xvfbwrapper pyyaml requests
 
 WORKDIR /app
 ADD "py/*" /app/
-RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.17.0/geckodriver-v0.17.0-linux64.tar.gz | tar xz -C /usr/local/bin
+RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz | tar xz -C /usr/local/bin
 CMD ["geckodriver", "--host", "0.0.0.0"]
 CMD ["python3.4", "/app/app.py"]
