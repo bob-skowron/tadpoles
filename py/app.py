@@ -234,7 +234,7 @@ class Client:
         '''Yields pairs of xpaths for each year/month tile on the
         right hand side of the user's home page.
         '''
-        month_xpath_tmpl = '//*[@id="app"]/div[4]/div[1]/ul/li[%d]/div/div/div/div/span[%d]'
+        month_xpath_tmpl = '//*[@id="app"]/div[3]/div[1]/ul/li[%d]/div/div/div/div/span[%d]'
         month_index = 1
         while True:
             month_xpath = month_xpath_tmpl % (month_index, 1)
