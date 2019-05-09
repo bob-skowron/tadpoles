@@ -66,7 +66,7 @@ class Client:
     ROOT_URL = "http://www.tadpoles.com/"
     HOME_URL = "https://www.tadpoles.com/parents"
     MIN_SLEEP = 1
-    MAX_SLEEP = 3
+    MAX_SLEEP = 6
 
     def __init__(self):
         self.init_logging()
@@ -173,6 +173,7 @@ class Client:
         self.info("Navigating to login page.")
         self.br.find_element_by_id("login-button").click()
         self.br.find_element_by_class_name("tp-block-half").click()
+        self.main_window = self.br.current_window_handle
 
         for element in self.br.find_elements_by_tag_name("img"):
             if "btn-google.png" in element.get_attribute("src"):
@@ -193,42 +194,25 @@ class Client:
         # Enter email.
         email = self.br.find_element_by_id("identifierId")
         email.send_keys(input("Enter email: "))
-        email.submit()
         self.br.find_element_by_id("identifierNext").click()
 
-        self.info("Sleeping 2 seconds.")
-        self.sleep(minsleep=2)
+        self.info("Sleeping 5 seconds.")
+        self.sleep(minsleep=5)
 
         # Enter password.
-        #passwd = self.br.find_element_by_id("password")
-        #passwd.send_keys(getpass("Enter password:"))
-        #passwd.submit()
-
-        password = self.br.find_element_by_name("password")
+        password = self.br.find_element_by_css_selector("input[type=password]")
         password.send_keys(getpass("Enter password:"))
-        password.submit()
         self.br.find_element_by_id("passwordNext").click()
 
         self.info("Sleeping 2 seconds.")
         self.sleep(minsleep=2)
 
-        # Enter 2FA pin.
-        pin = self.br.find_element_by_id("totpPin")
-        pin.send_keys(getpass("Enter google verification code: "))
-        pin.submit()
-        self.br.find_element_by_id("totpNext").click()
-
-        self.info("Sleeping 2 seconds.")
-        self.sleep(minsleep=2)
-
-        # Click "approve".
-        #self.info("Sleeping 2 seconds.")
-        #self.sleep(minsleep=2)
-        #self.info("Clicking 'approve' button.")
-        #self.br.find_element_by_id("submit_approve_access").click()
+        # 2FA can hopefully be handled by push notification on modern phones/apps
+        self.info("Sleeping 5 seconds.")
+        self.sleep(minsleep=5)
 
         # Switch back to tadpoles.
-        self.switch_windows()
+        self.br.switch_to.window(self.main_window)
 
     def iter_monthyear(self):
         '''Yields pairs of xpaths for each year/month tile on the
