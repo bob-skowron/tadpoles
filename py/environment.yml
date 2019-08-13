@@ -1,0 +1,9 @@
+name: tadpoles-env
+dependencies:
+- python=3
+- pip
+- pip:
+    - selenium
+    - requests
+    - pylint
+    - lxml
