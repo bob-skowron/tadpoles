@@ -13,9 +13,12 @@ RUN apt-get install -qyy \
     exiftool
 
 RUN pip3 install selenium xvfbwrapper pyyaml requests
+RUN pip3 install --upgrade --ignore-installed urllib3
+
+RUN apt-get update && apt-get install -y firefox wget
 
 WORKDIR /app
 ADD "py/*" /app/
-RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.19.1/geckodriver-v0.19.1-linux64.tar.gz | tar xz -C /usr/local/bin
+RUN curl -L https://github.com/mozilla/geckodriver/releases/download/v0.24.0/geckodriver-v0.24.0-linux64.tar.gz | tar xz -C /usr/local/bin
 CMD ["geckodriver", "--host", "0.0.0.0"]
-CMD ["python3.4", "/app/app.py"]
+#CMD ["python3.4", "/app/app.py"]

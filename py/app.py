@@ -221,8 +221,10 @@ class Client:
         month_xpath_tmpl = '//*[@id="app"]/div[3]/div[1]/ul/li[%d]/div/div/div/div/span[%d]'
         month_index = 1
         while True:
+           
             month_xpath = month_xpath_tmpl % (month_index, 1)
             year_xpath = month_xpath_tmpl % (month_index, 2)
+            self.info(self.br.find_element_by_xpath('//*[@id="app"]').get_attribute('innerHTML'))
 
             # Go home if not there already.
             if self.br.current_url != self.HOME_URL:
@@ -324,31 +326,31 @@ class Client:
         '''
         self.navigate_url(self.ROOT_URL)
 
-        try:
-            self.load_cookies()
-        except FileNotFoundError:
+        #try:
+            #self.load_cookies()
+        #except FileNotFoundError:
 
-            login_type = None
-            while login_type is None:
-                input_value = input("Login Type - [G]oogle or [E]mail/password: ")
-                if input_value == 'G' or input_value == 'g':
-                    login_type = 'google'
-                    self.info("Doing Google login...")
-                    self.do_google_login()
-                elif input_value == "E" or input_value == "e":
-                    login_type = 'email'
-                    self.info("Doing Email login...")
-                    self.do_login()
-                else:
-                    self.info("-- Invalid choice entered - please choose 'G' or 'E'")
+        login_type = None
+        while login_type is None:
+            input_value = input("Login Type - [G]oogle or [E]mail/password: ")
+            if input_value == 'G' or input_value == 'g':
+                login_type = 'google'
+                self.info("Doing Google login...")
+                self.do_google_login()
+            elif input_value == "E" or input_value == "e":
+                login_type = 'email'
+                self.info("Doing Email login...")
+                self.do_login()
+            else:
+                self.info("-- Invalid choice entered - please choose 'G' or 'E'")
 
-            self.dump_cookies()
-            self.load_cookies()
-            self.add_cookies_to_browser()
-            self.navigate_url(self.HOME_URL)
-        else:
-            self.add_cookies_to_browser()
-            self.navigate_url(self.HOME_URL)
+        self.dump_cookies()
+        self.load_cookies()
+        self.add_cookies_to_browser()
+        self.navigate_url(self.HOME_URL)
+        #else:
+        #    self.add_cookies_to_browser()
+        #    self.navigate_url(self.HOME_URL)
 
         # Get the cookies ready for requests lib.
         self.requestify_cookies()
@@ -373,4 +375,3 @@ def download_images():
 
 if __name__ == "__main__":
     download_images()
-

@@ -12,7 +12,6 @@ Dependencies
 +++++++++++++
 
 * Docker
-* s3cmd
 
 Usage
 +++++
@@ -20,8 +19,5 @@ Usage
 To use it::
 
     $ ./scripts/build.sh
-    $ export BUCKET_URI=s3://awesome_bucket/tadpoles/
-    $ ./scripts/update.sh
 
-The images get saved to ./img/ in year/month subdirectories, then 
-synced to s3 with s3cmd.
+The images get saved to ./img/ in year/month subdirectories.

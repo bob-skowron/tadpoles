@@ -1,1 +1,1 @@
-docker build --force-rm -t tadpoles .
+docker build --force-rm -t tadpoles ../
